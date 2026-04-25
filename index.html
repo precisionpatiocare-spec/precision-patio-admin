@@ -1,1 +1,734 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Precision Patio Care — Admin Dashboard</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { font-family: 'Segoe UI', sans-serif; background: #f0f0f0; color: #2c2c2c; }
+
+  /* HEADER */
+  .header { background: #1B2A4A; padding: 16px 24px; display: flex; align-items: center; justify-content: space-between; }
+  .header h1 { color: #C9A84C; font-size: 20px; font-weight: 700; letter-spacing: 1px; }
+  .header span { color: #fff; font-size: 13px; opacity: 0.7; }
+
+  /* TABS */
+  .tabs { background: #1B2A4A; display: flex; padding: 0 24px; border-top: 1px solid rgba(255,255,255,0.1); }
+  .tab { padding: 12px 20px; color: rgba(255,255,255,0.6); cursor: pointer; font-size: 14px; border-bottom: 3px solid transparent; transition: all 0.2s; }
+  .tab:hover { color: #C9A84C; }
+  .tab.active { color: #C9A84C; border-bottom: 3px solid #C9A84C; }
+
+  /* MAIN CONTENT */
+  .content { padding: 24px; display: none; }
+  .content.active { display: block; }
+
+  /* DASHBOARD CARDS */
+  .cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 16px; margin-bottom: 24px; }
+  .card { background: #fff; border-radius: 10px; padding: 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.08); border-left: 4px solid #1B2A4A; }
+  .card.gold { border-left-color: #C9A84C; }
+  .card.red { border-left-color: #e74c3c; }
+  .card.green { border-left-color: #27ae60; }
+  .card h3 { font-size: 12px; color: #888; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 8px; }
+  .card .number { font-size: 32px; font-weight: 700; color: #1B2A4A; }
+
+  /* SECTION HEADER */
+  .section-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; }
+  .section-header h2 { font-size: 18px; color: #1B2A4A; font-weight: 600; }
+
+  /* BUTTONS */
+  .btn { padding: 10px 18px; border: none; border-radius: 6px; cursor: pointer; font-size: 14px; font-weight: 600; transition: all 0.2s; }
+  .btn-primary { background: #1B2A4A; color: #fff; }
+  .btn-primary:hover { background: #243a66; }
+  .btn-gold { background: #C9A84C; color: #fff; }
+  .btn-gold:hover { background: #b8963e; }
+  .btn-danger { background: #e74c3c; color: #fff; font-size: 12px; padding: 6px 12px; }
+  .btn-edit { background: #1B2A4A; color: #fff; font-size: 12px; padding: 6px 12px; }
+  .btn-sm { font-size: 12px; padding: 6px 12px; }
+
+  /* SEARCH & FILTER */
+  .filters { display: flex; gap: 12px; margin-bottom: 16px; flex-wrap: wrap; }
+  .filters input, .filters select { padding: 8px 12px; border: 1px solid #ddd; border-radius: 6px; font-size: 14px; background: #fff; }
+  .filters input { flex: 1; min-width: 200px; }
+
+  /* TABLE */
+  .table-wrap { background: #fff; border-radius: 10px; box-shadow: 0 2px 8px rgba(0,0,0,0.08); overflow: hidden; }
+  table { width: 100%; border-collapse: collapse; }
+  th { background: #1B2A4A; color: #C9A84C; padding: 12px 16px; text-align: left; font-size: 13px; text-transform: uppercase; letter-spacing: 0.5px; }
+  td { padding: 12px 16px; border-bottom: 1px solid #f0f0f0; font-size: 14px; vertical-align: middle; }
+  tr:hover td { background: #fafafa; }
+  tr:last-child td { border-bottom: none; }
+
+  /* BADGES */
+  .badge { display: inline-block; padding: 3px 10px; border-radius: 20px; font-size: 11px; font-weight: 600; text-transform: uppercase; }
+  .badge-new { background: #e8f4fd; color: #2980b9; }
+  .badge-contacted { background: #fef9e7; color: #f39c12; }
+  .badge-scheduled { background: #e8f8f5; color: #27ae60; }
+  .badge-completed { background: #eafaf1; color: #1e8449; }
+  .badge-cancelled { background: #fdf2f2; color: #e74c3c; }
+  .badge-unpaid { background: #fdf2f2; color: #e74c3c; }
+  .badge-deposit { background: #fef9e7; color: #f39c12; }
+  .badge-paid { background: #eafaf1; color: #27ae60; }
+  .badge-create { background: #fdf2f2; color: #e74c3c; }
+  .badge-send { background: #fef9e7; color: #f39c12; }
+  .badge-sent { background: #eafaf1; color: #27ae60; }
+
+  /* MODAL */
+  .modal-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1000; overflow-y: auto; }
+  .modal-overlay.active { display: flex; align-items: flex-start; justify-content: center; padding: 40px 20px; }
+  .modal { background: #fff; border-radius: 12px; width: 100%; max-width: 700px; overflow: hidden; }
+  .modal-header { background: #1B2A4A; padding: 20px 24px; display: flex; justify-content: space-between; align-items: center; }
+  .modal-header h3 { color: #C9A84C; font-size: 18px; }
+  .modal-close { color: #fff; background: none; border: none; font-size: 24px; cursor: pointer; opacity: 0.7; }
+  .modal-close:hover { opacity: 1; }
+  .modal-body { padding: 24px; }
+  .modal-footer { padding: 16px 24px; background: #f9f9f9; display: flex; justify-content: flex-end; gap: 12px; border-top: 1px solid #eee; }
+
+  /* FORM */
+  .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+  .form-group { display: flex; flex-direction: column; gap: 6px; }
+  .form-group.full { grid-column: 1 / -1; }
+  .form-group label { font-size: 12px; font-weight: 600; color: #555; text-transform: uppercase; letter-spacing: 0.5px; }
+  .form-group input, .form-group select, .form-group textarea { padding: 10px 12px; border: 1px solid #ddd; border-radius: 6px; font-size: 14px; font-family: inherit; }
+  .form-group textarea { resize: vertical; min-height: 80px; }
+  .form-section-title { grid-column: 1 / -1; font-size: 13px; font-weight: 700; color: #1B2A4A; text-transform: uppercase; letter-spacing: 1px; padding: 8px 0 4px; border-bottom: 2px solid #C9A84C; margin-top: 8px; }
+
+  /* WORKERS */
+  .worker-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 16px; }
+  .worker-card { background: #fff; border-radius: 10px; padding: 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.08); border-top: 4px solid #1B2A4A; }
+  .worker-card h3 { color: #1B2A4A; font-size: 16px; margin-bottom: 8px; }
+  .worker-card p { font-size: 13px; color: #666; margin-bottom: 4px; }
+  .worker-card .rate { font-size: 18px; font-weight: 700; color: #C9A84C; margin: 8px 0; }
+  .worker-actions { display: flex; gap: 8px; margin-top: 12px; flex-wrap: wrap; }
+  .clock-status { font-size: 12px; padding: 4px 10px; border-radius: 20px; font-weight: 600; }
+  .clock-in { background: #eafaf1; color: #27ae60; }
+  .clock-out { background: #fdf2f2; color: #e74c3c; }
+
+  /* CALENDAR */
+  .calendar-header { display: flex; align-items: center; gap: 16px; margin-bottom: 16px; }
+  .calendar-header h3 { color: #1B2A4A; font-size: 16px; font-weight: 600; }
+  .week-nav { display: flex; gap: 8px; }
+  .week-nav button { background: #1B2A4A; color: #fff; border: none; padding: 6px 14px; border-radius: 6px; cursor: pointer; font-size: 13px; }
+  .calendar-tabs { display: flex; gap: 8px; margin-bottom: 16px; }
+  .cal-tab { padding: 8px 16px; border-radius: 6px; cursor: pointer; font-size: 13px; font-weight: 600; border: 2px solid #1B2A4A; color: #1B2A4A; background: #fff; }
+  .cal-tab.active { background: #1B2A4A; color: #C9A84C; }
+  .schedule-grid { background: #fff; border-radius: 10px; box-shadow: 0 2px 8px rgba(0,0,0,0.08); overflow: auto; }
+  .schedule-table { width: 100%; border-collapse: collapse; min-width: 700px; }
+  .schedule-table th { background: #1B2A4A; color: #C9A84C; padding: 10px 8px; font-size: 12px; text-align: center; }
+  .schedule-table td { border: 1px solid #eee; padding: 0; height: 44px; }
+  .time-col { background: #f9f9f9; padding: 0 12px; font-size: 12px; color: #888; font-weight: 600; white-space: nowrap; width: 80px; }
+  .slot { width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; cursor: pointer; font-size: 11px; padding: 4px; text-align: center; transition: background 0.15s; }
+  .slot.empty { background: #f9f9f9; color: #ccc; }
+  .slot.empty:hover { background: #e8f0fe; color: #1B2A4A; }
+  .slot.booked { background: #1B2A4A; color: #fff; font-weight: 600; }
+  .slot.completed { background: #27ae60; color: #fff; }
+  .slot.cancelled { background: #e74c3c; color: #fff; }
+  .slot.blocked { background: #ccc; color: #888; cursor: not-allowed; }
+  .slot.sunday { background: #f0f0f0; cursor: not-allowed; color: #ccc; }
+
+  /* EMPTY STATE */
+  .empty-state { text-align: center; padding: 48px 24px; color: #aaa; }
+  .empty-state p { font-size: 15px; margin-top: 8px; }
+
+  /* RESPONSIVE */
+  @media (max-width: 600px) {
+    .form-grid { grid-template-columns: 1fr; }
+    .cards { grid-template-columns: 1fr 1fr; }
+    th, td { padding: 8px 10px; font-size: 12px; }
+  }
+</style>
+</head>
+<body>
+
+<!-- HEADER -->
+<div class="header">
+  <h1>⚙️ Precision Patio Care — Admin</h1>
+  <span id="current-date"></span>
+</div>
+
+<!-- TABS -->
+<div class="tabs">
+  <div class="tab active" onclick="switchTab('dashboard')">📊 Dashboard</div>
+  <div class="tab" onclick="switchTab('leads')">👥 Leads</div>
+  <div class="tab" onclick="switchTab('workers')">👷 Workers</div>
+  <div class="tab" onclick="switchTab('appointments')">📅 Appointments</div>
+</div>
+
+<!-- DASHBOARD TAB -->
+<div class="content active" id="tab-dashboard">
+  <div class="cards">
+    <div class="card"><h3>Total Customers</h3><div class="number" id="stat-total">0</div></div>
+    <div class="card gold"><h3>Pending Leads</h3><div class="number" id="stat-pending">0</div></div>
+    <div class="card green"><h3>Scheduled</h3><div class="number" id="stat-scheduled">0</div></div>
+    <div class="card red"><h3>Invoices to Create</h3><div class="number" id="stat-create">0</div></div>
+    <div class="card gold"><h3>Invoices to Send</h3><div class="number" id="stat-send">0</div></div>
+  </div>
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>Name</th><th>Phone</th><th>Service</th><th>Status</th><th>Appointment</th><th>Invoice</th></tr></thead>
+      <tbody id="dashboard-tbody"><tr><td colspan="6"><div class="empty-state"><p>No leads yet. Add your first lead in the Leads tab.</p></div></td></tr></tbody>
+    </table>
+  </div>
+</div>
+
+<!-- LEADS TAB -->
+<div class="content" id="tab-leads">
+  <div class="section-header">
+    <h2>All Leads</h2>
+    <button class="btn btn-gold" onclick="openLeadModal()">+ Add Lead</button>
+  </div>
+  <div class="filters">
+    <input type="text" id="lead-search" placeholder="Search by name, phone, or email..." oninput="renderLeads()">
+    <select id="lead-filter-status" onchange="renderLeads()">
+      <option value="">All Statuses</option>
+      <option>New Lead</option><option>Contacted</option><option>Scheduled</option><option>Completed</option><option>Cancelled</option>
+    </select>
+    <select id="lead-filter-payment" onchange="renderLeads()">
+      <option value="">All Payments</option>
+      <option>Unpaid</option><option>Deposit Paid</option><option>Paid in Full</option>
+    </select>
+  </div>
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>Name</th><th>Phone</th><th>Email</th><th>Service</th><th>Status</th><th>Payment</th><th>Invoice</th><th>Appointment</th><th>Actions</th></tr></thead>
+      <tbody id="leads-tbody"></tbody>
+    </table>
+  </div>
+</div>
+
+<!-- WORKERS TAB -->
+<div class="content" id="tab-workers">
+  <div class="section-header">
+    <h2>Workers</h2>
+    <button class="btn btn-gold" onclick="openWorkerModal()">+ Add Worker</button>
+  </div>
+  <div class="worker-grid" id="workers-grid"></div>
+</div>
+
+<!-- APPOINTMENTS TAB -->
+<div class="content" id="tab-appointments">
+  <div class="calendar-header">
+    <div class="week-nav">
+      <button onclick="changeWeek(-1)">← Prev</button>
+      <button onclick="changeWeek(1)">Next →</button>
+    </div>
+    <h3 id="week-label"></h3>
+  </div>
+  <div class="calendar-tabs">
+    <div class="cal-tab active" onclick="switchCalTab('call')">📞 Call Schedule</div>
+    <div class="cal-tab" onclick="switchCalTab('service')">🔧 Service Schedule</div>
+  </div>
+  <div class="schedule-grid">
+    <table class="schedule-table">
+      <thead id="cal-thead"></thead>
+      <tbody id="cal-tbody"></tbody>
+    </table>
+  </div>
+</div>
+
+<!-- LEAD MODAL -->
+<div class="modal-overlay" id="lead-modal">
+  <div class="modal">
+    <div class="modal-header">
+      <h3 id="lead-modal-title">Add New Lead</h3>
+      <button class="modal-close" onclick="closeLeadModal()">×</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-grid">
+        <div class="form-section-title">Contact Information</div>
+        <div class="form-group"><label>Full Name *</label><input id="f-name" type="text" placeholder="Jane Smith"></div>
+        <div class="form-group"><label>Phone *</label><input id="f-phone" type="tel" placeholder="(555) 000-0000"></div>
+        <div class="form-group"><label>Email</label><input id="f-email" type="email" placeholder="jane@email.com"></div>
+        <div class="form-group"><label>Street Address</label><input id="f-address" type="text" placeholder="123 Main St"></div>
+        <div class="form-group"><label>City</label><input id="f-city" type="text" placeholder="Los Angeles"></div>
+        <div class="form-group"><label>Zip Code</label><input id="f-zip" type="text" placeholder="90001"></div>
+        <div class="form-group"><label>Property Type</label><select id="f-property"><option>Residential</option><option>Commercial</option></select></div>
+        <div class="form-group"><label>How They Heard</label><select id="f-heard"><option>Google</option><option>Referral</option><option>Social Media</option><option>Other</option></select></div>
+
+        <div class="form-section-title">Services</div>
+        <div class="form-group full"><label>Services Requested</label>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;padding:8px;border:1px solid #ddd;border-radius:6px;">
+            <label style="text-transform:none;font-weight:400;font-size:13px;"><input type="checkbox" value="Frame Cleaning"> Frame Cleaning</label>
+            <label style="text-transform:none;font-weight:400;font-size:13px;"><input type="checkbox" value="Drain/Gutter Cleaning"> Drain/Gutter Cleaning</label>
+            <label style="text-transform:none;font-weight:400;font-size:13px;"><input type="checkbox" value="Bundle - Frame + Drain/Gutter"> Bundle</label>
+            <label style="text-transform:none;font-weight:400;font-size:13px;"><input type="checkbox" value="Leak Repair"> Leak Repair</label>
+            <label style="text-transform:none;font-weight:400;font-size:13px;"><input type="checkbox" value="Inspection"> Inspection</label>
+            <label style="text-transform:none;font-weight:400;font-size:13px;"><input type="checkbox" value="Re-programming"> Re-programming</label>
+            <label style="text-transform:none;font-weight:400;font-size:13px;"><input type="checkbox" value="Installation"> Installation</label>
+            <label style="text-transform:none;font-weight:400;font-size:13px;"><input type="checkbox" value="Other" onchange="toggleOther(this)"> Other</label>
+          </div>
+          <input id="f-other-desc" type="text" placeholder="Describe other service..." style="margin-top:8px;display:none;">
+        </div>
+        <div class="form-group"><label>Number of Systems</label><input id="f-systems" type="number" min="1" placeholder="1"></div>
+
+        <div class="form-section-title">Pergola Details</div>
+        <div class="form-group"><label>Size</label><select id="f-size"><option>12x10ft</option><option>12x12ft</option><option>12x14ft</option><option>12x16ft</option><option>12x18ft</option><option>12x20ft</option><option>12x22ft</option><option>12x24ft</option><option>Custom/Other</option></select></div>
+        <div class="form-group"><label>Frame Color</label><select id="f-frame-color"><option>Black</option><option>Bronze</option><option>White</option><option>Gray</option><option>Adobe</option><option>Beige</option><option>Wood</option></select></div>
+        <div class="form-group"><label>Louver Color</label><select id="f-louver-color"><option>Black</option><option>Bronze</option><option>White</option><option>Gray</option><option>Adobe</option><option>Beige</option><option>Wood</option><option>Glossy Gray</option><option>Off-White/Cream</option></select></div>
+        <div class="form-group"><label>Brand (optional)</label><input id="f-brand" type="text" placeholder="e.g. Pergola Depot"></div>
+        <div class="form-group"><label>How Long Owned</label><select id="f-owned"><option>Less than 1 year</option><option>1-2 years</option><option>3-5 years</option><option>5+ years</option></select></div>
+        <div class="form-group"><label>Last Cleaned</label><select id="f-cleaned"><option>Never</option><option>Less than 6 months</option><option>6-12 months</option><option>1-2 years</option><option>2+ years</option></select></div>
+        <div class="form-group"><label>Dirtiness Level</label><select id="f-dirty"><option>Light</option><option>Moderate</option><option>Heavy</option><option>Extreme</option></select></div>
+
+        <div class="form-section-title">Admin Fields</div>
+        <div class="form-group"><label>Appointment Status</label><select id="f-appt-status"><option>New Lead</option><option>Contacted</option><option>Scheduled</option><option>Completed</option><option>Cancelled</option></select></div>
+        <div class="form-group"><label>Job Status</label><select id="f-job-status"><option>Pending</option><option>In Progress</option><option>Completed</option><option>Cancelled</option></select></div>
+        <div class="form-group"><label>Payment Status</label><select id="f-payment"><option>Unpaid</option><option>Deposit Paid</option><option>Paid in Full</option></select></div>
+        <div class="form-group"><label>Invoice Status</label><select id="f-invoice"><option>Need to Create</option><option>Need to Send</option><option>Sent</option></select></div>
+        <div class="form-group full"><label>Upcoming Appointment</label><input id="f-upcoming" type="datetime-local"></div>
+        <div class="form-group full"><label>Recommended Maintenance</label><input id="f-maintenance" type="text" placeholder="e.g. Schedule cleaning every 6 months"></div>
+        <div class="form-group full"><label>Job Notes</label><textarea id="f-job-notes" placeholder="Notes about the job..."></textarea></div>
+        <div class="form-group full"><label>Internal Notes</label><textarea id="f-internal-notes" placeholder="Internal notes (not visible to customer)..."></textarea></div>
+        <div class="form-group full"><label>Service History</label><textarea id="f-service-history" placeholder="Past services performed..."></textarea></div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-primary" onclick="closeLeadModal()">Cancel</button>
+      <button class="btn btn-gold" onclick="saveLead()">Save Lead</button>
+    </div>
+  </div>
+</div>
+
+<!-- WORKER MODAL -->
+<div class="modal-overlay" id="worker-modal">
+  <div class="modal">
+    <div class="modal-header">
+      <h3 id="worker-modal-title">Add Worker</h3>
+      <button class="modal-close" onclick="closeWorkerModal()">×</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-grid">
+        <div class="form-group"><label>Full Name *</label><input id="w-name" type="text" placeholder="John Doe"></div>
+        <div class="form-group"><label>Phone *</label><input id="w-phone" type="tel" placeholder="(555) 000-0000"></div>
+        <div class="form-group full"><label>Address</label><input id="w-address" type="text" placeholder="123 Main St, City, CA"></div>
+        <div class="form-group"><label>Hourly Rate ($)</label><input id="w-rate" type="number" min="0" step="0.01" placeholder="18.00"></div>
+        <div class="form-group"><label>Has Car?</label><select id="w-car"><option>Yes</option><option>No</option></select></div>
+        <div class="form-group"><label>Notification Preference</label><select id="w-notif"><option>SMS</option><option>Email</option><option>Both</option></select></div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-primary" onclick="closeWorkerModal()">Cancel</button>
+      <button class="btn btn-gold" onclick="saveWorker()">Save Worker</button>
+    </div>
+  </div>
+</div>
+
+<!-- APPOINTMENT MODAL -->
+<div class="modal-overlay" id="appt-modal">
+  <div class="modal">
+    <div class="modal-header">
+      <h3 id="appt-modal-title">Book Appointment</h3>
+      <button class="modal-close" onclick="closeApptModal()">×</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-grid">
+        <div class="form-group"><label>Customer Name</label><input id="a-name" type="text" placeholder="Jane Smith"></div>
+        <div class="form-group"><label>Phone</label><input id="a-phone" type="tel" placeholder="(555) 000-0000"></div>
+        <div class="form-group full"><label>Address</label><input id="a-address" type="text" placeholder="123 Main St"></div>
+        <div class="form-group"><label>Service Type</label><select id="a-service"><option>Frame Cleaning</option><option>Drain/Gutter Cleaning</option><option>Bundle</option><option>Inspection</option><option>Leak Repair</option><option>Re-programming</option><option>Installation</option><option>Other</option></select></div>
+        <div class="form-group"><label>Worker Assigned</label><select id="a-worker"><option value="">-- Select Worker --</option></select></div>
+        <div class="form-group"><label>Status</label><select id="a-status"><option>Booked</option><option>Completed</option><option>Cancelled</option><option>Blocked</option></select></div>
+        <div class="form-group full"><label>Notes</label><textarea id="a-notes" placeholder="Any notes..."></textarea></div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-primary" onclick="closeApptModal()">Cancel</button>
+      <button class="btn btn-gold" onclick="saveAppt()">Save</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ============================================================
+// DATA STORE (localStorage)
+// ============================================================
+let leads = JSON.parse(localStorage.getItem('pp_leads') || '[]');
+let workers = JSON.parse(localStorage.getItem('pp_workers') || '[]');
+let appointments = JSON.parse(localStorage.getItem('pp_appointments') || '[]');
+let editLeadIndex = -1;
+let editWorkerIndex = -1;
+let currentWeekOffset = 0;
+let currentCalTab = 'call';
+let pendingSlot = null;
+let editApptIndex = -1;
+
+function saveData() {
+  localStorage.setItem('pp_leads', JSON.stringify(leads));
+  localStorage.setItem('pp_workers', JSON.stringify(workers));
+  localStorage.setItem('pp_appointments', JSON.stringify(appointments));
+}
+
+// ============================================================
+// DATE
+// ============================================================
+document.getElementById('current-date').textContent = new Date().toLocaleDateString('en-US', {weekday:'long',year:'numeric',month:'long',day:'numeric'});
+
+// ============================================================
+// TABS
+// ============================================================
+function switchTab(tab) {
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.content').forEach(c => c.classList.remove('active'));
+  event.target.classList.add('active');
+  document.getElementById('tab-' + tab).classList.add('active');
+  if (tab === 'leads') renderLeads();
+  if (tab === 'workers') renderWorkers();
+  if (tab === 'appointments') renderCalendar();
+  if (tab === 'dashboard') renderDashboard();
+}
+
+// ============================================================
+// DASHBOARD
+// ============================================================
+function renderDashboard() {
+  document.getElementById('stat-total').textContent = leads.length;
+  document.getElementById('stat-pending').textContent = leads.filter(l => l.apptStatus === 'New Lead' || l.apptStatus === 'Contacted').length;
+  document.getElementById('stat-scheduled').textContent = leads.filter(l => l.apptStatus === 'Scheduled').length;
+  document.getElementById('stat-create').textContent = leads.filter(l => l.invoice === 'Need to Create').length;
+  document.getElementById('stat-send').textContent = leads.filter(l => l.invoice === 'Need to Send').length;
+  const tbody = document.getElementById('dashboard-tbody');
+  if (!leads.length) { tbody.innerHTML = '<tr><td colspan="6"><div class="empty-state"><p>No leads yet.</p></div></td></tr>'; return; }
+  tbody.innerHTML = leads.map(l => `<tr>
+    <td><strong>${l.name}</strong></td>
+    <td>${l.phone}</td>
+    <td>${(l.services||[]).join(', ') || '—'}</td>
+    <td><span class="badge badge-${statusClass(l.apptStatus)}">${l.apptStatus}</span></td>
+    <td>${l.upcoming ? new Date(l.upcoming).toLocaleString() : '—'}</td>
+    <td><span class="badge badge-${invoiceClass(l.invoice)}">${l.invoice}</span></td>
+  </tr>`).join('');
+}
+
+// ============================================================
+// LEADS
+// ============================================================
+function openLeadModal(index = -1) {
+  editLeadIndex = index;
+  document.getElementById('lead-modal-title').textContent = index === -1 ? 'Add New Lead' : 'Edit Lead';
+  const f = index === -1 ? {} : leads[index];
+  document.getElementById('f-name').value = f.name || '';
+  document.getElementById('f-phone').value = f.phone || '';
+  document.getElementById('f-email').value = f.email || '';
+  document.getElementById('f-address').value = f.address || '';
+  document.getElementById('f-city').value = f.city || '';
+  document.getElementById('f-zip').value = f.zip || '';
+  document.getElementById('f-property').value = f.property || 'Residential';
+  document.getElementById('f-heard').value = f.heard || 'Google';
+  document.querySelectorAll('#lead-modal input[type=checkbox]').forEach(cb => { cb.checked = (f.services||[]).includes(cb.value); });
+  document.getElementById('f-other-desc').value = f.otherDesc || '';
+  document.getElementById('f-other-desc').style.display = (f.services||[]).includes('Other') ? 'block' : 'none';
+  document.getElementById('f-systems').value = f.systems || '';
+  document.getElementById('f-size').value = f.size || '12x10ft';
+  document.getElementById('f-frame-color').value = f.frameColor || 'Black';
+  document.getElementById('f-louver-color').value = f.louverColor || 'Black';
+  document.getElementById('f-brand').value = f.brand || '';
+  document.getElementById('f-owned').value = f.owned || 'Less than 1 year';
+  document.getElementById('f-cleaned').value = f.cleaned || 'Never';
+  document.getElementById('f-dirty').value = f.dirty || 'Light';
+  document.getElementById('f-appt-status').value = f.apptStatus || 'New Lead';
+  document.getElementById('f-job-status').value = f.jobStatus || 'Pending';
+  document.getElementById('f-payment').value = f.payment || 'Unpaid';
+  document.getElementById('f-invoice').value = f.invoice || 'Need to Create';
+  document.getElementById('f-upcoming').value = f.upcoming || '';
+  document.getElementById('f-maintenance').value = f.maintenance || '';
+  document.getElementById('f-job-notes').value = f.jobNotes || '';
+  document.getElementById('f-internal-notes').value = f.internalNotes || '';
+  document.getElementById('f-service-history').value = f.serviceHistory || '';
+  document.getElementById('lead-modal').classList.add('active');
+}
+
+function closeLeadModal() { document.getElementById('lead-modal').classList.remove('active'); }
+
+function toggleOther(cb) { document.getElementById('f-other-desc').style.display = cb.checked ? 'block' : 'none'; }
+
+function saveLead() {
+  const name = document.getElementById('f-name').value.trim();
+  const phone = document.getElementById('f-phone').value.trim();
+  if (!name || !phone) { alert('Name and phone are required.'); return; }
+  const services = Array.from(document.querySelectorAll('#lead-modal input[type=checkbox]:checked')).map(cb => cb.value);
+  const lead = {
+    name, phone,
+    email: document.getElementById('f-email').value.trim(),
+    address: document.getElementById('f-address').value.trim(),
+    city: document.getElementById('f-city').value.trim(),
+    zip: document.getElementById('f-zip').value.trim(),
+    property: document.getElementById('f-property').value,
+    heard: document.getElementById('f-heard').value,
+    services,
+    otherDesc: document.getElementById('f-other-desc').value.trim(),
+    systems: document.getElementById('f-systems').value,
+    size: document.getElementById('f-size').value,
+    frameColor: document.getElementById('f-frame-color').value,
+    louverColor: document.getElementById('f-louver-color').value,
+    brand: document.getElementById('f-brand').value.trim(),
+    owned: document.getElementById('f-owned').value,
+    cleaned: document.getElementById('f-cleaned').value,
+    dirty: document.getElementById('f-dirty').value,
+    apptStatus: document.getElementById('f-appt-status').value,
+    jobStatus: document.getElementById('f-job-status').value,
+    payment: document.getElementById('f-payment').value,
+    invoice: document.getElementById('f-invoice').value,
+    upcoming: document.getElementById('f-upcoming').value,
+    maintenance: document.getElementById('f-maintenance').value.trim(),
+    jobNotes: document.getElementById('f-job-notes').value.trim(),
+    internalNotes: document.getElementById('f-internal-notes').value.trim(),
+    serviceHistory: document.getElementById('f-service-history').value.trim(),
+    createdAt: editLeadIndex === -1 ? new Date().toISOString() : leads[editLeadIndex].createdAt,
+    updatedAt: new Date().toISOString()
+  };
+  if (editLeadIndex === -1) leads.unshift(lead); else leads[editLeadIndex] = lead;
+  saveData(); closeLeadModal(); renderLeads(); renderDashboard();
+}
+
+function deleteLead(index) {
+  if (!confirm('Delete this lead?')) return;
+  leads.splice(index, 1); saveData(); renderLeads(); renderDashboard();
+}
+
+function renderLeads() {
+  const search = document.getElementById('lead-search').value.toLowerCase();
+  const statusF = document.getElementById('lead-filter-status').value;
+  const paymentF = document.getElementById('lead-filter-payment').value;
+  let filtered = leads.filter((l, i) => {
+    l._index = i;
+    const matchSearch = !search || l.name.toLowerCase().includes(search) || (l.phone||'').includes(search) || (l.email||'').toLowerCase().includes(search);
+    const matchStatus = !statusF || l.apptStatus === statusF;
+    const matchPayment = !paymentF || l.payment === paymentF;
+    return matchSearch && matchStatus && matchPayment;
+  });
+  const tbody = document.getElementById('leads-tbody');
+  if (!filtered.length) { tbody.innerHTML = '<tr><td colspan="9"><div class="empty-state"><p>No leads found.</p></div></td></tr>'; return; }
+  tbody.innerHTML = filtered.map(l => `<tr>
+    <td><strong>${l.name}</strong><br><small style="color:#888">${l.city||''}</small></td>
+    <td>${l.phone}</td>
+    <td>${l.email||'—'}</td>
+    <td>${(l.services||[]).slice(0,2).join(', ')||'—'}</td>
+    <td><span class="badge badge-${statusClass(l.apptStatus)}">${l.apptStatus}</span></td>
+    <td><span class="badge badge-${paymentClass(l.payment)}">${l.payment}</span></td>
+    <td><span class="badge badge-${invoiceClass(l.invoice)}">${l.invoice}</span></td>
+    <td>${l.upcoming ? new Date(l.upcoming).toLocaleDateString() : '—'}</td>
+    <td style="white-space:nowrap">
+      <button class="btn btn-edit btn-sm" onclick="openLeadModal(${l._index})">Edit</button>
+      <button class="btn btn-danger btn-sm" onclick="deleteLead(${l._index})">Delete</button>
+    </td>
+  </tr>`).join('');
+}
+
+// ============================================================
+// WORKERS
+// ============================================================
+function openWorkerModal(index = -1) {
+  editWorkerIndex = index;
+  document.getElementById('worker-modal-title').textContent = index === -1 ? 'Add Worker' : 'Edit Worker';
+  const w = index === -1 ? {} : workers[index];
+  document.getElementById('w-name').value = w.name || '';
+  document.getElementById('w-phone').value = w.phone || '';
+  document.getElementById('w-address').value = w.address || '';
+  document.getElementById('w-rate').value = w.rate || '';
+  document.getElementById('w-car').value = w.car || 'Yes';
+  document.getElementById('w-notif').value = w.notif || 'SMS';
+  document.getElementById('worker-modal').classList.add('active');
+}
+
+function closeWorkerModal() { document.getElementById('worker-modal').classList.remove('active'); }
+
+function saveWorker() {
+  const name = document.getElementById('w-name').value.trim();
+  const phone = document.getElementById('w-phone').value.trim();
+  if (!name || !phone) { alert('Name and phone are required.'); return; }
+  const worker = {
+    name, phone,
+    address: document.getElementById('w-address').value.trim(),
+    rate: parseFloat(document.getElementById('w-rate').value) || 0,
+    car: document.getElementById('w-car').value,
+    notif: document.getElementById('w-notif').value,
+    clockedIn: editWorkerIndex === -1 ? false : workers[editWorkerIndex].clockedIn,
+    clockInTime: editWorkerIndex === -1 ? null : workers[editWorkerIndex].clockInTime,
+    totalHours: editWorkerIndex === -1 ? 0 : workers[editWorkerIndex].totalHours || 0
+  };
+  if (editWorkerIndex === -1) workers.push(worker); else workers[editWorkerIndex] = worker;
+  saveData(); closeWorkerModal(); renderWorkers();
+}
+
+function deleteWorker(index) {
+  if (!confirm('Delete this worker?')) return;
+  workers.splice(index, 1); saveData(); renderWorkers();
+}
+
+function clockToggle(index) {
+  const w = workers[index];
+  if (!w.clockedIn) {
+    w.clockedIn = true; w.clockInTime = new Date().toISOString();
+  } else {
+    const mins = (new Date() - new Date(w.clockInTime)) / 60000;
+    w.totalHours = (w.totalHours || 0) + mins / 60;
+    w.clockedIn = false; w.clockInTime = null;
+  }
+  saveData(); renderWorkers();
+}
+
+function renderWorkers() {
+  const grid = document.getElementById('workers-grid');
+  if (!workers.length) { grid.innerHTML = '<div class="empty-state"><p>No workers yet. Click "+ Add Worker" to add one.</p></div>'; return; }
+  grid.innerHTML = workers.map((w, i) => {
+    const pay = ((w.totalHours || 0) * w.rate).toFixed(2);
+    const hrs = (w.totalHours || 0).toFixed(2);
+    return `<div class="worker-card">
+      <h3>${w.name}</h3>
+      <p>📞 ${w.phone}</p>
+      <p>📍 ${w.address || '—'}</p>
+      <p>🚗 Has Car: ${w.car}</p>
+      <p>🔔 Notifications: ${w.notif}</p>
+      <div class="rate">$${w.rate.toFixed(2)}/hr</div>
+      <p>⏱ Total Hours This Week: <strong>${hrs}</strong></p>
+      <p>💰 Pay Owed: <strong>$${pay}</strong></p>
+      <span class="clock-status ${w.clockedIn ? 'clock-in' : 'clock-out'}">${w.clockedIn ? '🟢 Clocked In' : '🔴 Clocked Out'}</span>
+      <div class="worker-actions">
+        <button class="btn ${w.clockedIn ? 'btn-danger' : 'btn-gold'} btn-sm" onclick="clockToggle(${i})">${w.clockedIn ? 'Clock Out' : 'Clock In'}</button>
+        <button class="btn btn-edit btn-sm" onclick="openWorkerModal(${i})">Edit</button>
+        <button class="btn btn-danger btn-sm" onclick="deleteWorker(${i})">Delete</button>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+// ============================================================
+// CALENDAR
+// ============================================================
+function switchCalTab(tab) {
+  currentCalTab = tab;
+  document.querySelectorAll('.cal-tab').forEach(t => t.classList.remove('active'));
+  event.target.classList.add('active');
+  renderCalendar();
+}
+
+function changeWeek(dir) { currentWeekOffset += dir; renderCalendar(); }
+
+function getWeekDates() {
+  const now = new Date();
+  const day = now.getDay();
+  const monday = new Date(now);
+  monday.setDate(now.getDate() - (day === 0 ? 6 : day - 1) + (currentWeekOffset * 7));
+  const days = [];
+  for (let i = 0; i < 7; i++) {
+    const d = new Date(monday);
+    d.setDate(monday.getDate() + i);
+    days.push(d);
+  }
+  return days;
+}
+
+function renderCalendar() {
+  const days = getWeekDates();
+  const isCall = currentCalTab === 'call';
+  const startHour = 7, endHour = isCall ? 19 : 17;
+  const step = isCall ? 30 : 60;
+  const dayNames = ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
+
+  document.getElementById('week-label').textContent =
+    days[0].toLocaleDateString('en-US',{month:'short',day:'numeric'}) + ' – ' +
+    days[6].toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'});
+
+  // Header
+  document.getElementById('cal-thead').innerHTML = '<tr><th>Time</th>' +
+    days.map((d,i) => `<th>${dayNames[i]}<br><small>${d.toLocaleDateString('en-US',{month:'short',day:'numeric'})}</small></th>`).join('') + '</tr>';
+
+  // Body
+  let rows = '';
+  for (let min = startHour * 60; min < endHour * 60; min += step) {
+    const h = Math.floor(min / 60), m = min % 60;
+    const label = `${h > 12 ? h - 12 : h}:${m === 0 ? '00' : m} ${h >= 12 ? 'PM' : 'AM'}`;
+    rows += `<tr><td class="time-col">${label}</td>`;
+    days.forEach((d, di) => {
+      const isSunday = d.getDay() === 0;
+      const dateStr = d.toISOString().split('T')[0];
+      const timeStr = `${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}`;
+      const appt = appointments.find(a => a.date === dateStr && a.time === timeStr && a.calType === currentCalTab);
+      if (isSunday) {
+        rows += `<td><div class="slot sunday">Closed</div></td>`;
+      } else if (appt) {
+        const cls = appt.status === 'Completed' ? 'completed' : appt.status === 'Cancelled' ? 'cancelled' : appt.status === 'Blocked' ? 'blocked' : 'booked';
+        const apptIdx = appointments.indexOf(appt);
+        rows += `<td><div class="slot ${cls}" onclick="editAppt(${apptIdx})">${appt.status === 'Blocked' ? '🚫 Blocked' : appt.customerName}</div></td>`;
+      } else {
+        rows += `<td><div class="slot empty" onclick="openApptModal('${dateStr}','${timeStr}')">+</div></td>`;
+      }
+    });
+    rows += '</tr>';
+  }
+  document.getElementById('cal-tbody').innerHTML = rows;
+}
+
+function openApptModal(date, time) {
+  pendingSlot = { date, time };
+  editApptIndex = -1;
+  document.getElementById('appt-modal-title').textContent = `Book: ${date} at ${time}`;
+  document.getElementById('a-name').value = '';
+  document.getElementById('a-phone').value = '';
+  document.getElementById('a-address').value = '';
+  document.getElementById('a-service').value = 'Frame Cleaning';
+  document.getElementById('a-status').value = 'Booked';
+  document.getElementById('a-notes').value = '';
+  const wSel = document.getElementById('a-worker');
+  wSel.innerHTML = '<option value="">-- Select Worker --</option>' + workers.map((w,i) => `<option value="${i}">${w.name}</option>`).join('');
+  document.getElementById('appt-modal').classList.add('active');
+}
+
+function editAppt(index) {
+  editApptIndex = index;
+  const a = appointments[index];
+  pendingSlot = { date: a.date, time: a.time };
+  document.getElementById('appt-modal-title').textContent = 'Edit Appointment';
+  document.getElementById('a-name').value = a.customerName || '';
+  document.getElementById('a-phone').value = a.phone || '';
+  document.getElementById('a-address').value = a.address || '';
+  document.getElementById('a-service').value = a.service || 'Frame Cleaning';
+  document.getElementById('a-status').value = a.status || 'Booked';
+  document.getElementById('a-notes').value = a.notes || '';
+  const wSel = document.getElementById('a-worker');
+  wSel.innerHTML = '<option value="">-- Select Worker --</option>' + workers.map((w,i) => `<option value="${i}" ${a.workerIndex == i ? 'selected' : ''}>${w.name}</option>`).join('');
+  document.getElementById('appt-modal').classList.add('active');
+}
+
+function closeApptModal() { document.getElementById('appt-modal').classList.remove('active'); pendingSlot = null; }
+
+function saveAppt() {
+  const appt = {
+    date: pendingSlot.date,
+    time: pendingSlot.time,
+    calType: currentCalTab,
+    customerName: document.getElementById('a-name').value.trim() || 'Blocked',
+    phone: document.getElementById('a-phone').value.trim(),
+    address: document.getElementById('a-address').value.trim(),
+    service: document.getElementById('a-service').value,
+    workerIndex: document.getElementById('a-worker').value,
+    status: document.getElementById('a-status').value,
+    notes: document.getElementById('a-notes').value.trim()
+  };
+  if (editApptIndex === -1) appointments.push(appt); else appointments[editApptIndex] = appt;
+  saveData(); closeApptModal(); renderCalendar();
+}
+
+// ============================================================
+// BADGE HELPERS
+// ============================================================
+function statusClass(s) {
+  const map = {'New Lead':'new','Contacted':'contacted','Scheduled':'scheduled','Completed':'completed','Cancelled':'cancelled'};
+  return map[s] || 'new';
+}
+function paymentClass(s) {
+  const map = {'Unpaid':'unpaid','Deposit Paid':'deposit','Paid in Full':'paid'};
+  return map[s] || 'unpaid';
+}
+function invoiceClass(s) {
+  const map = {'Need to Create':'create','Need to Send':'send','Sent':'sent'};
+  return map[s] || 'create';
+}
+
+// ============================================================
+// INIT
+// ============================================================
+renderDashboard();
+</script>
+</body>
+</html>
 
